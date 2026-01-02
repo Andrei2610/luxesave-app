@@ -3,10 +3,14 @@ import base64
 import os
 import random
 
-# 1. CONFIGURARE PAGINĂ
+# 1. SETĂRI PAGINĂ
 st.set_page_config(page_title="LuxeSave Elite", page_icon="💎")
 
-# CSS - Stilul Luxe (Inclusiv fundalul)
+# 2. MEMORIE (SESSION STATE) - Aceasta este "inima" listei tale
+if 'cos' not in st.session_state:
+    st.session_state.cos = []
+
+# 3. FUNDAL VULPE
 def get_base64(bin_file):
     if os.path.exists(bin_file):
         with open(bin_file, 'rb') as f:
@@ -24,60 +28,59 @@ st.markdown(f"""
             background-size: cover; background-attachment: fixed;
         }}
         .glass {{
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(20px);
-            padding: 20px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.3);
-            text-align: center; color: #1a1a1a;
-        }}
-        .price-tag {{
-            color: #d32f2f; font-weight: 900; font-size: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(25px);
+            padding: 25px; border-radius: 30px; 
+            border: 1px solid rgba(255,255,255,0.4);
+            text-align: center; color: #000;
         }}
     </style>
 """, unsafe_allow_html=True)
 
-# 2. INITIALIZARE SESIUNE (Sistemul de memorie)
-if 'lista_cumparaturi' not in st.session_state:
-    st.session_state.lista_cumparaturi = []
-
-# 3. INTERFAȚĂ
+# 4. INTERFAȚĂ
 st.markdown('<div class="glass">', unsafe_allow_html=True)
-st.title("LUXESAVE")
-st.write("💎 ARCTIC ELITE INTELLIGENCE")
+st.title("💎 LUXESAVE")
+st.write("ARCTIC ELITE INTELLIGENCE")
 
-# --- SECȚIUNEA LISTĂ (Apare doar dacă ai produse) ---
-if st.session_state.lista_cumparaturi:
-    st.markdown("### 🛒 COȘUL TĂU:")
-    total_plata = 0
-    for produs in st.session_state.lista_cumparaturi:
-        st.write(f"✅ {produs['nume']} ({produs['magazin']}) — {produs['pret']:.2f}€")
-        total_plata += produs['pret']
+# --- AFIȘARE LISTĂ (Dacă avem ceva în ea) ---
+if st.session_state.cos:
+    st.markdown("### 🛒 LISTA TA ACTUALĂ:")
+    total = 0
+    for produs in st.session_state.cos:
+        st.write(f"✅ {produs['nume']} — {produs['pret']:.2f}€")
+        total += produs['pret']
+    st.subheader(f"TOTAL: {total:.2f}€")
     
-    st.subheader(f"TOTAL: {total_plata:.2f}€")
-    if st.button("🗑️ GOLEȘTE LISTA"):
-        st.session_state.lista_cumparaturi = []
+    if st.button("🗑️ GOLEȘTE TOT"):
+        st.session_state.cos = []
         st.rerun()
     st.markdown("---")
 
-# --- CĂUTARE ---
-cautare = st.text_input("", placeholder="Scrie ce vrei să cumperi (ex: Bier)...")
+# --- ZONA DE CĂUTARE ȘI ADĂUGARE ---
+query = st.text_input("Ce cauți azi?", placeholder="Ex: Bier, Milch...")
 
-if cautare:
-    # Simulăm ofertele
-    pret_hofer = 0.45 if cautare.lower() == "bier" else round(random.uniform(0.7, 1.5), 2)
-    pret_lidl = 0.49 if cautare.lower() == "bier" else round(random.uniform(0.7, 1.5), 2)
+if query:
+    # Generăm prețuri fixe pentru sesiune
+    pret_h = 0.45 if query.lower() == "bier" else 0.89
+    pret_l = 0.49 if query.lower() == "bier" else 0.95
 
-    # OFERTA 1: HOFER
-    st.markdown(f"**HOFER** — <span class='price-tag'>{pret_hofer}€</span>", unsafe_allow_html=True)
-    if st.button(f"ADĂUGĂ HOFER - {pret_hofer}€"):
-        st.session_state.lista_cumparaturi.append({"nume": cautare, "magazin": "HOFER", "pret": pret_hofer})
-        st.rerun()
+    st.write(f"Rezultate pentru: **{query}**")
+    
+    # Folosim butoane simple, dar cu logica de salvare forțată
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown(f"**HOFER**")
+        st.markdown(f"## {pret_h}€")
+        if st.button(f"ADĂUGĂ HOFER"):
+            st.session_state.cos.append({"nume": f"{query} (Hofer)", "pret": pret_h})
+            st.rerun()
 
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # OFERTA 2: LIDL
-    st.markdown(f"**LIDL** — <span class='price-tag'>{pret_lidl}€</span>", unsafe_allow_html=True)
-    if st.button(f"ADĂUGĂ LIDL - {pret_lidl}€"):
-        st.session_state.lista_cumparaturi.append({"nume": cautare, "magazin": "LIDL", "pret": pret_lidl})
-        st.rerun()
+    with col2:
+        st.markdown(f"**LIDL**")
+        st.markdown(f"## {pret_l}€")
+        if st.button(f"ADĂUGĂ LIDL"):
+            st.session_state.cos.append({"nume": f"{query} (Lidl)", "pret": pret_l})
+            st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
